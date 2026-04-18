@@ -140,6 +140,18 @@ input[readonly]{opacity:0.6;cursor:default}
 .bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;border-radius:8px;cursor:pointer;font-size:9px;color:var(--muted);transition:all .2s;min-width:48px;text-align:center}
 .bn-item:hover,.bn-item.active{color:var(--acc);background:var(--acc-glow)}
 .bn-icon{font-size:16px}
+/* ═══ Mobile Drawer ═══ */
+.mob-menu-btn{display:none;background:none;border:none;color:var(--text);font-size:22px;cursor:pointer;padding:4px 7px;line-height:1;border-radius:7px;transition:background .15s;flex-shrink:0}
+.mob-menu-btn:hover{background:var(--card-bg)}
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;backdrop-filter:blur(2px)}
+.drawer-overlay.open{display:block}
+.mobile-drawer{position:fixed;top:0;right:-260px;width:245px;height:100vh;background:var(--sidebar);border-left:1px solid var(--card-border);z-index:301;display:flex;flex-direction:column;transition:right .26s cubic-bezier(.4,0,.2,1);overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.5)}
+.mobile-drawer.open{right:0}
+.drawer-header{padding:13px 11px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;justify-content:space-between;gap:8px}
+.drawer-logo{display:flex;align-items:center;gap:9px}
+.drawer-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:3px 7px;border-radius:6px;line-height:1;flex-shrink:0}
+.drawer-close:hover{color:var(--text);background:rgba(255,255,255,0.07)}
+.drawer-nav{padding:8px 7px;flex:1}
 @media print{body>*{display:none!important}#print-area{display:block!important}}
 #print-area{display:none;direction:rtl;font-family:'Traditional Arabic',Arial,sans-serif;padding:22px;color:#000;background:#fff}
 .print-logo{text-align:center;margin-bottom:18px;border-bottom:2px solid #8B6914;padding-bottom:13px}
@@ -170,7 +182,7 @@ body.light-mode tr:hover td{background:rgba(0,0,0,0.02)}
 body.light-mode .invoice-box{background:rgba(0,0,0,0.02)}
 body.light-mode .bottom-nav{background:#fff}
 body.light-mode .barcode-scan-box{background:rgba(0,0,0,0.02);border-color:rgba(200,134,42,0.3)}
-@media (max-width: 768px){.sidebar{display:none}.bottom-nav{display:flex;flex-direction:column}.main{height:100vh;padding-bottom:70px}.topbar{height:48px;padding:0 12px}.topbar-title{font-size:14px}.content{padding:12px}.grid4,.grid3,.grid2{grid-template-columns:1fr;gap:8px;margin-bottom:10px}.metric{padding:11px}.metric-value{font-size:18px}.card{padding:12px;margin-bottom:10px}.card-title{font-size:12px;margin-bottom:8px}.table-wrap{margin-bottom:10px;border-radius:8px;border:1px solid var(--card-border)}table{font-size:11px;min-width:100%}th,td{padding:6px 8px}.btn{padding:6px 10px;font-size:11px}.search-bar{max-width:100%;width:100%}.modal{width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}.modal-header,.modal-footer{position:relative}.form-grid{grid-template-columns:1fr;gap:8px}.form-group.full{grid-column:auto}.topbar-actions{gap:4px}.export-btn-row{gap:6px}.export-btn-row .btn{flex:1;min-width:calc(50% - 4px);text-align:center;justify-content:center}.settings-section{margin-bottom:15px}.setting-row{padding:8px 0}.barcode-scan-box{flex-direction:column;align-items:stretch}.barcode-scan-box span{text-align:center}.barcode-scan-box input{text-align:center;font-size:14px}}
+@media (max-width: 768px){.sidebar{display:none}.bottom-nav{display:none!important}.mob-menu-btn{display:flex;align-items:center}.main{height:100vh;padding-bottom:0}.topbar{height:48px;padding:0 12px}.topbar-title{font-size:14px}.content{padding:12px}.grid4,.grid3,.grid2{grid-template-columns:1fr;gap:8px;margin-bottom:10px}.metric{padding:11px}.metric-value{font-size:18px}.card{padding:12px;margin-bottom:10px}.card-title{font-size:12px;margin-bottom:8px}.table-wrap{margin-bottom:10px;border-radius:8px;border:1px solid var(--card-border)}table{font-size:11px;min-width:100%}th,td{padding:6px 8px}.btn{padding:6px 10px;font-size:11px}.search-bar{max-width:100%;width:100%}.modal{width:100vw;max-width:100vw;height:100vh;max-height:100vh;border-radius:0}.modal-header,.modal-footer{position:relative}.form-grid{grid-template-columns:1fr;gap:8px}.form-group.full{grid-column:auto}.topbar-actions{gap:4px}.export-btn-row{gap:6px}.export-btn-row .btn{flex:1;min-width:calc(50% - 4px);text-align:center;justify-content:center}.settings-section{margin-bottom:15px}.setting-row{padding:8px 0}.barcode-scan-box{flex-direction:column;align-items:stretch}.barcode-scan-box span{text-align:center}.barcode-scan-box input{text-align:center;font-size:14px}}
 @media (max-width: 480px){.metric-value{font-size:16px}.metric-label{font-size:10px}.bn-item{min-width:40px;padding:3px 6px;font-size:8px}.bn-icon{font-size:14px}.modal-body{padding:14px}}
 </style>
 </head>
@@ -195,19 +207,44 @@ body.light-mode .barcode-scan-box{background:rgba(0,0,0,0.02);border-color:rgba(
 <div class="nav-section">أخرى</div><div class="nav-item" onclick="navigate('customers')"><span class="nav-icon">👥</span> الزبائن</div>
 <div class="nav-item" onclick="navigate('reports')"><span class="nav-icon">📈</span> التقارير والتصدير</div>
 <div class="nav-item" onclick="navigate('settings')"><span class="nav-icon">⚙️</span> الإعدادات</div></div></div>
-<div class="main"><div class="topbar"><div class="topbar-title" id="page-title">لوحة التحكم</div>
+<div class="main"><div class="topbar">
+<button class="mob-menu-btn" onclick="openDrawer()" title="القائمة">☰</button>
+<div class="topbar-title" id="page-title">لوحة التحكم</div>
 <div class="topbar-actions" id="topbar-actions"><button class="btn btn-secondary" onclick="navigate('settings')" title="الإعدادات">⚙️</button>
 <button class="btn btn-secondary" onclick="doLogout()" title="خروج">🚪</button></div></div>
 <div class="content" id="content"></div></div></div>
 
-<div class="bottom-nav"><div class="bottom-nav-row">
-<div class="bn-item active" onclick="navigate('dashboard')"><span class="bn-icon">📊</span><span>لوحة</span></div>
-<div class="bn-item" onclick="navigate('products')"><span class="bn-icon">👗</span><span>منتجات</span></div>
-<div class="bn-item" onclick="navigate('sales')"><span class="bn-icon">🧾</span><span>مبيعات</span></div>
-<div class="bn-item" onclick="navigate('purchases')"><span class="bn-icon">🛒</span><span>مشتريات</span></div>
-<div class="bn-item" onclick="navigate('reports')"><span class="bn-icon">📈</span><span>تقارير</span></div>
-<div class="bn-item" onclick="navigate('settings')"><span class="bn-icon">⚙️</span><span>إعدادات</span></div>
-</div></div>
+<!-- Mobile Drawer -->
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+<div class="mobile-drawer" id="mobile-drawer">
+  <div class="drawer-header">
+    <div class="drawer-logo">
+      <img src="logo.png" alt="شعار" style="width:32px;height:auto">
+      <div><div class="logo-text" id="drawer-store-name">محل جواهر</div><div class="logo-sub">نظام الإدارة</div></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">×</button>
+  </div>
+  <div class="drawer-nav">
+    <div class="nav-section">الرئيسية</div>
+    <div class="nav-item active" id="dnav-dashboard" onclick="navigate('dashboard');closeDrawer()"><span class="nav-icon">📊</span> لوحة التحكم</div>
+    <div class="nav-section">المخزون</div>
+    <div class="nav-item" id="dnav-products" onclick="navigate('products');closeDrawer()"><span class="nav-icon">👗</span> المنتجات</div>
+    <div class="nav-item" id="dnav-stock-in" onclick="navigate('stock-in');closeDrawer()"><span class="nav-icon">📥</span> إدخال البضاعة</div>
+    <div class="nav-item" id="dnav-stock-out" onclick="navigate('stock-out');closeDrawer()"><span class="nav-icon">📤</span> إخراج البضاعة</div>
+    <div class="nav-section">المالية</div>
+    <div class="nav-item" id="dnav-sales" onclick="navigate('sales');closeDrawer()"><span class="nav-icon">🧾</span> فواتير المبيعات</div>
+    <div class="nav-item" id="dnav-purchases" onclick="navigate('purchases');closeDrawer()"><span class="nav-icon">🛒</span> فواتير المشتريات</div>
+    <div class="nav-item" id="dnav-returns" onclick="navigate('returns');closeDrawer()"><span class="nav-icon">↩️</span> المردودات</div>
+    <div class="nav-item" id="dnav-installments" onclick="navigate('installments');closeDrawer()"><span class="nav-icon">💳</span> الدفعات (فيرسمو)</div>
+    <div class="nav-section">أخرى</div>
+    <div class="nav-item" id="dnav-customers" onclick="navigate('customers');closeDrawer()"><span class="nav-icon">👥</span> الزبائن</div>
+    <div class="nav-item" id="dnav-reports" onclick="navigate('reports');closeDrawer()"><span class="nav-icon">📈</span> التقارير والتصدير</div>
+    <div class="nav-item" id="dnav-settings" onclick="navigate('settings');closeDrawer()"><span class="nav-icon">⚙️</span> الإعدادات</div>
+    <div style="padding:16px 0 8px">
+      <button class="btn btn-secondary" style="width:100%;justify-content:center" onclick="doLogout()">🚪 خروج</button>
+    </div>
+  </div>
+</div>
 <div id="print-area"></div>
 <div id="modal" class="modal-overlay" style="display:none"><div class="modal"><div class="modal-header"><span class="modal-title" id="modal-title">عنوان</span><button class="modal-close" onclick="closeModal()">×</button></div>
 <div class="modal-body" id="modal-body"></div><div class="modal-footer" id="modal-footer"></div></div></div>
@@ -237,7 +274,36 @@ let currentPage = 'dashboard';
 let isSyncing = false;
 
 // ═══════════════════════════════════════════════
-// 📲 PWA - تثبيت التطبيق
+// 📱 Mobile Drawer
+// ═══════════════════════════════════════════════
+function openDrawer(){
+  document.getElementById('mobile-drawer').classList.add('open');
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeDrawer(){
+  document.getElementById('mobile-drawer').classList.remove('open');
+  document.getElementById('drawer-overlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+// إغلاق الـ Drawer عند الضغط على Escape
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();}});
+
+// تحديث الـ Drawer عند تغيير الاسم
+function syncDrawerName(){
+  const el=document.getElementById('drawer-store-name');
+  const sn=document.getElementById('store-name-display');
+  if(el&&sn) el.textContent=sn.textContent;
+}
+
+// تحديث العنصر النشط في الـ Drawer
+function updateDrawerActive(page){
+  document.querySelectorAll('.mobile-drawer .nav-item').forEach(el=>{
+    el.classList.remove('active');
+  });
+  const target=document.getElementById('dnav-'+page);
+  if(target) target.classList.add('active');
+}
 // ═══════════════════════════════════════════════
 let pwaInstallPrompt = null;
 let pwaInstalled = false;
@@ -399,6 +465,7 @@ function navigate(page){
   currentPage = page; // ✅ تتبع الصفحة الحالية
   document.querySelectorAll('.nav-item').forEach(el=>{el.classList.toggle('active',el.getAttribute('onclick')&&el.getAttribute('onclick').includes(`'${page}'`));});
   document.querySelectorAll('.bn-item').forEach(el=>{el.classList.toggle('active',el.getAttribute('onclick')&&el.getAttribute('onclick').includes(`'${page}'`));});
+  updateDrawerActive(page);
   const titles={dashboard:'لوحة التحكم',products:'إدارة المنتجات','stock-in':'إدخال البضاعة','stock-out':'إخراج البضاعة',sales:'فواتير المبيعات',purchases:'فواتير المشتريات',returns:'المردودات',installments:'الدفعات (فيرسمو)',customers:'الزبائن',reports:'التقارير والتصدير',settings:'الإعدادات'};
   document.getElementById('page-title').textContent=titles[page]||'';
   const pages={dashboard:renderDashboard,products:renderProducts,'stock-in':renderStockIn,'stock-out':renderStockOut,sales:renderSales,purchases:renderPurchases,returns:renderReturns,installments:renderInstallments,customers:renderCustomers,reports:renderReports,settings:renderSettings};
@@ -625,7 +692,7 @@ document.getElementById('content').innerHTML=`<div class="card"><div class="sett
 function toggleDark(v){settings.darkMode=v;saveSettings(settings);applySettings();}
 function setAccent(c){settings.accentColor=c;saveSettings(settings);applySettings();document.querySelectorAll('.swatch').forEach(s=>{s.classList.toggle('active',s.style.background===c||s.getAttribute('onclick').includes(`'${c}'`));});const cc=document.getElementById('custom-color');if(cc)cc.value=c;}
 function setFont(f){settings.font=f;saveSettings(settings);applySettings();document.querySelectorAll('.font-opt').forEach(el=>{el.classList.toggle('active',el.getAttribute('onclick').includes(`'${f}'`));});}
-function saveStoreName(){const v=document.getElementById('store-name-inp').value.trim();if(!v){alert('يرجى إدخال اسم المحل');return;}settings.storeName=v;saveSettings(settings);applySettings();alert('تم حفظ اسم المحل ✓');}
+function saveStoreName(){const v=document.getElementById('store-name-inp').value.trim();if(!v){alert('يرجى إدخال اسم المحل');return;}settings.storeName=v;saveSettings(settings);applySettings();syncDrawerName();alert('تم حفظ اسم المحل ✓');}
 function changePassword(){
   const cur=document.getElementById('pw-cur').value;
   const nw=document.getElementById('pw-new').value;
