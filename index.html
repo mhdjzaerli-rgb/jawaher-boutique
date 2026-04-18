@@ -10,6 +10,11 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c8862a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="محل جواهر">
 <style>
 /* ✅ نفس التنسيقات السابقة تماماً (لم تتغير) */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -125,7 +130,12 @@ input[readonly]{opacity:0.6;cursor:default}
 .font-options{display:flex;gap:7px;flex-wrap:wrap}
 .font-opt{padding:5px 12px;border-radius:20px;cursor:pointer;font-size:12px;background:var(--card-bg);border:1px solid var(--card-border);color:var(--muted);transition:all .15s}
 .font-opt.active,.font-opt:hover{background:var(--acc-glow);border-color:var(--acc);color:var(--acc)}
-.bottom-nav{display:none;background:var(--sidebar);border-top:1px solid var(--card-border);position:fixed;bottom:0;left:0;right:0;z-index:100;padding:4px 8px 10px;box-shadow:0 -4px 12px rgba(0,0,0,.3)}
+.btn-install{background:linear-gradient(135deg,#c8862a,#e0a040);color:#fff;border:none;display:flex;align-items:center;gap:7px}
+.btn-install:hover{background:linear-gradient(135deg,#b07520,#c8862a)}
+.pwa-install-card{background:linear-gradient(135deg,rgba(200,134,42,0.08),rgba(200,134,42,0.03));border:1px solid rgba(200,134,42,0.25);border-radius:10px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px}
+.pwa-install-info{flex:1}
+.pwa-install-icon{font-size:32px;flex-shrink:0}
+.pwa-installed-badge{display:inline-flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);color:#4ade80;font-size:12px;font-weight:600}background:var(--sidebar);border-top:1px solid var(--card-border);position:fixed;bottom:0;left:0;right:0;z-index:100;padding:4px 8px 10px;box-shadow:0 -4px 12px rgba(0,0,0,.3)}
 .bottom-nav-row{display:flex;justify-content:space-around;align-items:center;gap:4px}
 .bn-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 8px;border-radius:8px;cursor:pointer;font-size:9px;color:var(--muted);transition:all .2s;min-width:48px;text-align:center}
 .bn-item:hover,.bn-item.active{color:var(--acc);background:var(--acc-glow)}
@@ -225,6 +235,47 @@ const STORE_EMAIL = 'admin@jawaher-boutique.com';
 
 let currentPage = 'dashboard';
 let isSyncing = false;
+
+// ═══════════════════════════════════════════════
+// 📲 PWA - تثبيت التطبيق
+// ═══════════════════════════════════════════════
+let pwaInstallPrompt = null;
+let pwaInstalled = false;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  pwaInstallPrompt = e;
+  pwaInstalled = false;
+});
+
+window.addEventListener('appinstalled', () => {
+  pwaInstalled = true;
+  pwaInstallPrompt = null;
+  // إعادة رسم الإعدادات إذا كانت مفتوحة
+  if(currentPage === 'settings') renderSettings();
+});
+
+function installPWA() {
+  if(!pwaInstallPrompt) {
+    alert('التطبيق مثبت بالفعل أو المتصفح لا يدعم التثبيت.\nيمكنك استخدام قائمة المتصفح > "تثبيت التطبيق" أو "Add to Home Screen".');
+    return;
+  }
+  pwaInstallPrompt.prompt();
+  pwaInstallPrompt.userChoice.then(result => {
+    if(result.outcome === 'accepted') {
+      pwaInstalled = true;
+      pwaInstallPrompt = null;
+      if(currentPage === 'settings') renderSettings();
+    }
+  });
+}
+
+// تسجيل Service Worker
+if('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
 
 // تهيئة الحالة الافتراضية
 const DEF = {
@@ -557,7 +608,20 @@ function exportAll(){const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet
 
 const ACCENTS=[{c:'#c8862a',n:'ذهبي'},{c:'#e94560',n:'أحمر'},{c:'#3b82f6',n:'أزرق'},{c:'#10b981',n:'أخضر'},{c:'#8b5cf6',n:'بنفسجي'},{c:'#ec4899',n:'وردي'},{c:'#f59e0b',n:'عنبر'},{c:'#6366f1',n:'نيلي'}];
 const FONTS=['Segoe UI','Tahoma','Arial','Georgia','Courier New','Trebuchet MS'];
-function renderSettings(){document.getElementById('topbar-actions').innerHTML='';document.getElementById('content').innerHTML=`<div class="card"><div class="settings-section"><div class="settings-title">🎨 المظهر والشكل</div><div class="setting-row"><div><div class="setting-label">الوضع الليلي / النهاري</div><div class="setting-sub">تبديل بين الخلفية الداكنة والفاتحة</div></div><label class="toggle"><input type="checkbox" id="tog-dark" ${settings.darkMode?'checked':''} onchange="toggleDark(this.checked)"><span class="toggle-slider"></span></label></div><div class="setting-row"><div><div class="setting-label">لون التمييز</div><div class="setting-sub">اختر لون الأزرار والعناصر الرئيسية</div></div><div class="color-swatches" id="swatch-list"></div></div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px"><div><div class="setting-label">لون مخصص</div><div class="setting-sub">اختر أي لون تريده</div></div><input type="color" id="custom-color" value="${settings.accentColor}" onchange="setAccent(this.value)" style="width:60px;height:34px;padding:2px;cursor:pointer;border-radius:7px;direction:ltr"></div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px"><div><div class="setting-label">الخط</div><div class="setting-sub">اختر نوع الخط المناسب</div></div><div class="font-options" id="font-list"></div></div></div><div class="settings-section"><div class="settings-title">🏪 إعدادات المحل</div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px"><div><div class="setting-label">اسم المحل</div><div class="setting-sub">يظهر في الشريط الجانبي وتقارير الطباعة</div></div><div style="display:flex;gap:7px;width:100%"><input id="store-name-inp" value="${settings.storeName||'محل جواهر'}" style="flex:1"><button class="btn btn-primary" onclick="saveStoreName()">حفظ</button></div></div></div><div class="settings-section"><div class="settings-title">🔐 الأمان</div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px"><div><div class="setting-label">تغيير كلمة المرور</div></div><div class="form-grid" style="width:100%"><div class="form-group"><label>كلمة المرور الحالية</label><input type="password" id="pw-cur" placeholder="••••"></div><div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="pw-new" placeholder="••••"></div><div class="form-group"><label>تأكيد كلمة المرور</label><input type="password" id="pw-con" placeholder="••••"></div><div class="form-group" style="align-self:flex-end"><button class="btn btn-primary" onclick="changePassword()">تغيير</button></div></div></div></div><div class="settings-section"><div class="settings-title">💾 النسخ الاحتياطي</div><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-success" onclick="backupData()">⬇️ تنزيل نسخة احتياطية</button><button class="btn btn-warning" onclick="restoreData()">⬆️ استعادة من ملف</button><input type="file" id="restore-file" accept=".json" style="display:none" onchange="doRestore(this)"><button class="btn btn-danger" onclick="resetData()">🗑️ إعادة ضبط البيانات</button></div><div style="font-size:11px;color:var(--muted);margin-top:10px">يمكنك تنزيل نسخة احتياطية من جميع البيانات كملف JSON واستعادتها لاحقاً</div></div></div>`;const sl=document.getElementById('swatch-list');sl.innerHTML=ACCENTS.map(a=>`<div class="swatch ${settings.accentColor===a.c?'active':''}" style="background:${a.c}" title="${a.n}" onclick="setAccent('${a.c}')"></div>`).join('');const fl=document.getElementById('font-list');fl.innerHTML=FONTS.map(f=>`<div class="font-opt ${settings.font===f?'active':''}" style="font-family:'${f}'" onclick="setFont('${f}')">${f}</div>`).join('');setupEnter('store-name-inp',saveStoreName);}
+function renderSettings(){document.getElementById('topbar-actions').innerHTML='';
+
+// بناء قسم التثبيت
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+let pwaSection = '';
+if(isStandalone || pwaInstalled) {
+  pwaSection = `<div class="pwa-install-card"><span class="pwa-install-icon">✅</span><div class="pwa-install-info"><div class="setting-label">تطبيق مثبت</div><div class="setting-sub">أنت تستخدم التطبيق بالفعل كتطبيق مستقل على جهازك</div></div><span class="pwa-installed-badge">✓ مثبت</span></div>`;
+} else if(pwaInstallPrompt) {
+  pwaSection = `<div class="pwa-install-card"><span class="pwa-install-icon">💻</span><div class="pwa-install-info"><div class="setting-label">تثبيت كتطبيق على الحاسوب</div><div class="setting-sub">ثبّت التطبيق على جهازك للوصول السريع دون الحاجة للمتصفح</div></div><button class="btn btn-install" onclick="installPWA()">⬇️ تثبيت التطبيق</button></div>`;
+} else {
+  pwaSection = `<div class="pwa-install-card"><span class="pwa-install-icon">💻</span><div class="pwa-install-info"><div class="setting-label">تثبيت كتطبيق على الحاسوب</div><div class="setting-sub">افتح هذه الصفحة في متصفح Chrome أو Edge ثم اضغط على أيقونة التثبيت في شريط العنوان</div></div><span style="font-size:11px;color:var(--muted);text-align:left">🌐 Chrome / Edge فقط</span></div>`;
+}
+
+document.getElementById('content').innerHTML=`<div class="card"><div class="settings-section"><div class="settings-title">📲 تثبيت التطبيق</div>${pwaSection}</div><div class="settings-section"><div class="settings-title">🎨 المظهر والشكل</div><div class="setting-row"><div><div class="setting-label">الوضع الليلي / النهاري</div><div class="setting-sub">تبديل بين الخلفية الداكنة والفاتحة</div></div><label class="toggle"><input type="checkbox" id="tog-dark" ${settings.darkMode?'checked':''} onchange="toggleDark(this.checked)"><span class="toggle-slider"></span></label></div><div class="setting-row"><div><div class="setting-label">لون التمييز</div><div class="setting-sub">اختر لون الأزرار والعناصر الرئيسية</div></div><div class="color-swatches" id="swatch-list"></div></div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px"><div><div class="setting-label">لون مخصص</div><div class="setting-sub">اختر أي لون تريده</div></div><input type="color" id="custom-color" value="${settings.accentColor}" onchange="setAccent(this.value)" style="width:60px;height:34px;padding:2px;cursor:pointer;border-radius:7px;direction:ltr"></div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:10px"><div><div class="setting-label">الخط</div><div class="setting-sub">اختر نوع الخط المناسب</div></div><div class="font-options" id="font-list"></div></div></div><div class="settings-section"><div class="settings-title">🏪 إعدادات المحل</div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px"><div><div class="setting-label">اسم المحل</div><div class="setting-sub">يظهر في الشريط الجانبي وتقارير الطباعة</div></div><div style="display:flex;gap:7px;width:100%"><input id="store-name-inp" value="${settings.storeName||'محل جواهر'}" style="flex:1"><button class="btn btn-primary" onclick="saveStoreName()">حفظ</button></div></div></div><div class="settings-section"><div class="settings-title">🔐 الأمان</div><div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px"><div><div class="setting-label">تغيير كلمة المرور</div></div><div class="form-grid" style="width:100%"><div class="form-group"><label>كلمة المرور الحالية</label><input type="password" id="pw-cur" placeholder="••••"></div><div class="form-group"><label>كلمة المرور الجديدة</label><input type="password" id="pw-new" placeholder="••••"></div><div class="form-group"><label>تأكيد كلمة المرور</label><input type="password" id="pw-con" placeholder="••••"></div><div class="form-group" style="align-self:flex-end"><button class="btn btn-primary" onclick="changePassword()">تغيير</button></div></div></div></div><div class="settings-section"><div class="settings-title">💾 النسخ الاحتياطي</div><div style="display:flex;gap:9px;flex-wrap:wrap"><button class="btn btn-success" onclick="backupData()">⬇️ تنزيل نسخة احتياطية</button><button class="btn btn-warning" onclick="restoreData()">⬆️ استعادة من ملف</button><input type="file" id="restore-file" accept=".json" style="display:none" onchange="doRestore(this)"><button class="btn btn-danger" onclick="resetData()">🗑️ إعادة ضبط البيانات</button></div><div style="font-size:11px;color:var(--muted);margin-top:10px">يمكنك تنزيل نسخة احتياطية من جميع البيانات كملف JSON واستعادتها لاحقاً</div></div></div>`;const sl=document.getElementById('swatch-list');sl.innerHTML=ACCENTS.map(a=>`<div class="swatch ${settings.accentColor===a.c?'active':''}" style="background:${a.c}" title="${a.n}" onclick="setAccent('${a.c}')"></div>`).join('');const fl=document.getElementById('font-list');fl.innerHTML=FONTS.map(f=>`<div class="font-opt ${settings.font===f?'active':''}" style="font-family:'${f}'" onclick="setFont('${f}')">${f}</div>`).join('');setupEnter('store-name-inp',saveStoreName);}
 function toggleDark(v){settings.darkMode=v;saveSettings(settings);applySettings();}
 function setAccent(c){settings.accentColor=c;saveSettings(settings);applySettings();document.querySelectorAll('.swatch').forEach(s=>{s.classList.toggle('active',s.style.background===c||s.getAttribute('onclick').includes(`'${c}'`));});const cc=document.getElementById('custom-color');if(cc)cc.value=c;}
 function setFont(f){settings.font=f;saveSettings(settings);applySettings();document.querySelectorAll('.font-opt').forEach(el=>{el.classList.toggle('active',el.getAttribute('onclick').includes(`'${f}'`));});}
