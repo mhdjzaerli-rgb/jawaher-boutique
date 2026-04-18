@@ -1,0 +1,28 @@
+{
+  "name": "محل جواهر - نظام الإدارة",
+  "short_name": "جواهر",
+  "description": "نظام إدارة محل جواهر",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0d1117",
+  "theme_color": "#c8862a",
+  "lang": "ar",
+  "dir": "rtl",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "screenshots": []
+}
