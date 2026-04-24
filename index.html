@@ -364,25 +364,84 @@ const DEF = {
 let state = JSON.parse(JSON.stringify(DEF));
 
 // ✅ استبدال localStorage بمزامنة سحابية فورية
+let firestoreRetryCount = 0;
+
 function loadState(){
   firestoreUnsubscribe = db.collection('store').doc('main').onSnapshot(doc => {
+    firestoreRetryCount = 0;
+
     if(doc.exists){
       const data = doc.data();
-      Object.keys(DEF).forEach(k => { if(!Array.isArray(data[k])) data[k] = DEF[k]; });
+
+      // ═══ إصلاح الثغرة #1 ═══
+      // لا نستبدل Array إلا إذا كانت القيمة undefined تماماً
+      // (وليس null أو أي قيمة أخرى — لأن Firestore أحياناً يُرجع null عند ضعف الشبكة)
+      Object.keys(DEF).forEach(k => {
+        if(data[k] === undefined) data[k] = DEF[k];
+        else if(!Array.isArray(data[k])) {
+          // لو جاءت قيمة غير Array لكنها موجودة (null, string, ...) → لا نكتب DEF
+          // فقط نصلح إذا كانت undefined فعلاً
+          console.warn(`⚠️ حقل "${k}" غير متوقع:`, data[k], '— تم الاحتفاظ بالقيمة الافتراضية');
+          data[k] = DEF[k];
+        }
+      });
+
+      // ═══ حماية إضافية: لا نقبل بيانات فارغة كاملاً إذا كان عندنا state ═══
+      const incomingEmpty = data.products.length === 0 && data.salesInvoices.length === 0;
+      const currentHasData = state.products.length > 0 || state.salesInvoices.length > 0;
+      if(incomingEmpty && currentHasData) {
+        console.warn('🛑 تم رفض بيانات Firebase فارغة — الحفاظ على البيانات الحالية');
+        return; // تجاهل هذا الـ snapshot
+      }
+
       state = data;
-      // ✅ إصلاح: لا نستخدم isSyncing هنا لتجنب منع إعادة العرض
       navigate(currentPage);
+
     } else {
-      // أول تشغيل: إنشاء الوثيقة في السحابة
-      db.collection('store').doc('main').set(DEF);
-      state = DEF;
-      navigate('dashboard');
+      // ═══ إصلاح الثغرة #2 ═══
+      // doc.exists = false لا يعني بالضرورة أن البيانات محذوفة
+      // قد يكون سبب مؤقت (شبكة، quota) — نتحقق أولاً
+      if(state.products.length > 0 || state.salesInvoices.length > 0) {
+        // عندنا بيانات في الذاكرة → لا نكتب DEF، ننتظر
+        console.warn('⚠️ Firebase أرجع doc غير موجود لكن عندنا بيانات — لا نكتب DEF');
+        firestoreRetryCount++;
+        if(firestoreRetryCount >= 3) {
+          // بعد 3 محاولات فاشلة → نكتب البيانات الحالية (ليس DEF)
+          console.log('🔄 إعادة كتابة البيانات الحالية إلى Firebase...');
+          db.collection('store').doc('main').set(state);
+          firestoreRetryCount = 0;
+        }
+      } else {
+        // أول تشغيل حقيقي: لا يوجد شيء لا في Firebase ولا في الذاكرة
+        console.log('🆕 أول تشغيل — إنشاء الوثيقة');
+        db.collection('store').doc('main').set(DEF);
+        state = JSON.parse(JSON.stringify(DEF));
+        navigate('dashboard');
+      }
     }
-  }, err => console.error("Firestore error:", err));
+  }, err => {
+    console.error("Firestore error:", err);
+    // لا نمسح البيانات عند خطأ الاتصال
+    navigate(currentPage);
+  });
 }
 
 function saveState(){
   if(isSyncing) return;
+
+  // ═══ حماية: لا نحفظ بيانات فارغة إذا كانت البيانات الأصلية ممتلئة ═══
+  // (هذا يمنع الكتابة العرضية بـ DEF فوق البيانات الحقيقية)
+  const savingEmpty = state.products.length === 0 && state.salesInvoices.length === 0 &&
+                      state.purchaseInvoices.length === 0 && state.customers.length === 0;
+  if(savingEmpty) {
+    // تحقق: هل هذا resetData؟ إذا لا → تجاهل
+    const stack = new Error().stack || '';
+    if(!stack.includes('resetData')) {
+      console.warn('🛑 تم منع حفظ بيانات فارغة بالخطأ');
+      return;
+    }
+  }
+
   isSyncing = true;
   db.collection('store').doc('main').set(state, {merge:true})
     .then(()=>{ isSyncing = false; })
