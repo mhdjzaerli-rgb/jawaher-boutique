@@ -10,15 +10,10 @@ jobs:
       - name: تحميل المشروع
         uses: actions/checkout@v3
 
-      - name: تثبيت Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18'
-
       - name: تثبيت Firebase CLI
         run: npm install -g firebase-tools
 
       - name: نشر إلى Firebase
         run: firebase deploy --only hosting --project jawaher-boutique --token "$FIREBASE_TOKEN"
         env:
-          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}   # ← هذا السطر كان ناقصاً
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
