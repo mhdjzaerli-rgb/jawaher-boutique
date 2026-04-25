@@ -1,14 +1,11 @@
 name: Deploy to Firebase
-
 on:
   push:
     branches:
       - main
-
 jobs:
   build_and_deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: تحميل المشروع
         uses: actions/checkout@v3
@@ -23,3 +20,5 @@ jobs:
 
       - name: نشر إلى Firebase
         run: firebase deploy --only hosting --project jawaher-boutique --token "$FIREBASE_TOKEN"
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}   # ← هذا السطر كان ناقصاً
